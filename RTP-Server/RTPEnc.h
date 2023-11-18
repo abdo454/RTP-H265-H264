@@ -25,5 +25,6 @@ int initRTPMuxContext(RTPMuxContext *ctx);
 
 /* send a H.264/HEVC video stream */
 void rtpSendH264HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size);
+void rtpSendH265HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size);
 
 #endif //RTPSERVER_RTPENC_H

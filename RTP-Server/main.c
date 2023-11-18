@@ -14,7 +14,7 @@ int main() {
     int len = 0;
     int res;
     uint8_t *stream = NULL;
-    const char *fileName = "../Sample.h264";
+    const char *fileName = "../sample_960x540.hevc";
 
     RTPMuxContext rtpMuxContext;
     UDPContext udpContext = {
@@ -36,7 +36,7 @@ int main() {
     }
 
     initRTPMuxContext(&rtpMuxContext);
-    rtpSendH264HEVC(&rtpMuxContext, &udpContext, stream, len);
+    rtpSendH265HEVC(&rtpMuxContext, &udpContext, stream, len);
 
     free(stream);
 
