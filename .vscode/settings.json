@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "rtpenc.h": "c",
-        "network.h": "c"
+        "network.h": "c",
+        "avc.h": "c",
+        "inet.h": "c"
     }
 }

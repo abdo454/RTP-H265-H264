@@ -1,6 +1,13 @@
-//
-// Created by Liming Shao on 2018/5/10.
-//
+/**
+ * @file RTPEnc.h
+ * @author Abdo Daood (abdo.daood94@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-11-19
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 
 #ifndef RTPSERVER_RTPENC_H
 #define RTPSERVER_RTPENC_H
@@ -23,8 +30,10 @@ typedef struct {
 
 int initRTPMuxContext(RTPMuxContext *ctx);
 
-/* send a H.264/HEVC video stream */
-void rtpSendH264HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size);
+/* send a H.264/AVC video stream */
+void rtpSendH264AVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size);
+
+/* send a H.265/HEVC video stream */
 void rtpSendH265HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size);
 
 #endif //RTPSERVER_RTPENC_H

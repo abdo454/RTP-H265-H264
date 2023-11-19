@@ -1,22 +1,29 @@
-//
-// Created by Liming Shao on 2018/5/10.
-//
+/**
+ * @file AVC.c
+ * @author Abdo Daood (abdo.daood94@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-11-19
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 
 #include <stdio.h>
 #include "AVC.h"
 
 static const uint8_t *ff_avc_find_startcode_internal(const uint8_t *p, const uint8_t *end)
 {
-    const uint8_t *a = p + 4 - ((intptr_t)p & 3);  // a=p后面第一个地址为00的位置上
+    const uint8_t *a = p + 4 - ((intptr_t)p & 3);  // The first address after a=p is 00
 
-    for (end -= 3; p < a && p < end; p++) {        // 可能是保持4字节 对齐
+    for (end -= 3; p < a && p < end; p++) {        
         if (p[0] == 0 && p[1] == 0 && p[2] == 1)
             return p;
     }
 
     for (end -= 3; p < end; p += 4) {
-        uint32_t x = *(const uint32_t*)p;  // 取4个字节
-        if ((x - 0x01010101) & (~x) & 0x80808080) { // X中至少有一个字节为0
+        uint32_t x = *(const uint32_t*)p;  // Get 4 bytes
+        if ((x - 0x01010101) & (~x) & 0x80808080) { // At least one byte in X is 0
             if (p[1] == 0) {
                 if (p[0] == 0 && p[2] == 1) // 0 0 1 x
                     return p;

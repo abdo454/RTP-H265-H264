@@ -1,6 +1,13 @@
-//
-// Created by Liming Shao on 2018/5/10.
-//
+/**
+ * @file RTPEnc.c
+ * @author Abdo Daood (abdo.daood94@gmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2023-11-19
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 
 #include <stdint.h>
 #include <string.h>
@@ -76,8 +83,8 @@ void rtpSendData(RTPMuxContext *ctx, const uint8_t *buf, int len, int mark)
     ctx->seq = (ctx->seq + 1) & 0xffff;
 }
 
-// 拼接NAL头部 在 ctx->buff, 然后ff_rtp_send_data
-static void rtpSendNAL(RTPMuxContext *ctx, const uint8_t *nal, int size, int last)
+
+static void rtpSendNALH264AVC(RTPMuxContext *ctx, const uint8_t *nal, int size, int last)
 {
     printf("rtpSendNAL  len = %d M=%d\n", size, last);
 
@@ -154,9 +161,8 @@ static void rtpSendNAL(RTPMuxContext *ctx, const uint8_t *nal, int size, int las
         }
     }
     else
-    { // 分片分组
+    { // Fragmentation Unit
         /*
-         *
          *  0                   1                   2
          *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -210,6 +216,45 @@ static void rtpSendNAL(RTPMuxContext *ctx, const uint8_t *nal, int size, int las
         rtpSendData(ctx, buff, size + headerSize, last);
     }
 }
+// From an H264 stream, query the complete NAL and send it until all NAL in this stream is sent.
+void rtpSendH264AVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size)
+{
+    const uint8_t *r;
+    const uint8_t *end = buf + size;
+    gUdpContext = udp;
+
+    printf("\nrtpSendH264HEVC start\n");
+
+    if (NULL == ctx || NULL == udp || NULL == buf || size <= 0)
+    {
+        printf("rtpSendH264HEVC param error.\n");
+        return;
+    }
+
+    r = ff_avc_find_startcode(buf, end);
+    //  0x00 printf("%.2X \t", *r);
+    //  0x00 printf("%.2X \t", *(r + 1));
+    //  0x00 printf("%.2X \t", *(r + 2));
+    //  0x01 printf("%.2X \r\n", *(r + 3));
+    while (r < end)
+    {
+        const uint8_t *r1;
+        while (!*(r++))
+            ; // skip current startcode
+
+        r1 = ff_avc_find_startcode(r, end); // find next startcode
+
+        // send a NALU (except NALU startcode), r1==end indicates this is the last NALU
+        rtpSendNALH264AVC(ctx, r, (int)(r1 - r), r1 == end);
+
+        // control transmission speed
+        usleep(1000000 / 25);
+        // suppose the frame rate is 25 fps
+        ctx->timestamp += (90000.0 / 25);
+        r = r1;
+    }
+}
+
 // Splice NAL header in ctx->buff, then ff_rtp_send_data
 static void rtpSendNALH265(RTPMuxContext *ctx, const uint8_t *nal, int size, int last)
 {
@@ -292,7 +337,7 @@ static void rtpSendNALH265(RTPMuxContext *ctx, const uint8_t *nal, int size, int
         }
     }
     else
-    {
+    { // Fragmentation Unit
         // check if already there is some data
         if (ctx->buf_ptr > ctx->buf)
         {
@@ -355,7 +400,6 @@ static void rtpSendNALH265(RTPMuxContext *ctx, const uint8_t *nal, int size, int
         rtpSendData(ctx, ctx->buf, size + header_Size, last);
     }
 }
-
 // From an H265 stream, query the complete NAL and send it until all NAL in this stream is sent.
 void rtpSendH265HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size)
 {
@@ -396,45 +440,6 @@ void rtpSendH265HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, in
         usleep(1000000 / 30);
         // suppose the frame rate is 30 fps
         ctx->timestamp += (90000.0 / 30);
-        r = r1;
-    }
-}
-
-// 从一段H264流中，查询完整的NAL发送，直到发送完此流中的所有NAL
-void rtpSendH264HEVC(RTPMuxContext *ctx, UDPContext *udp, const uint8_t *buf, int size)
-{
-    const uint8_t *r;
-    const uint8_t *end = buf + size;
-    gUdpContext = udp;
-
-    printf("\nrtpSendH264HEVC start\n");
-
-    if (NULL == ctx || NULL == udp || NULL == buf || size <= 0)
-    {
-        printf("rtpSendH264HEVC param error.\n");
-        return;
-    }
-
-    r = ff_avc_find_startcode(buf, end);
-    //  0x00 printf("%.2X \t", *r);
-    //  0x00 printf("%.2X \t", *(r + 1));
-    //  0x00 printf("%.2X \t", *(r + 2));
-    //  0x01 printf("%.2X \r\n", *(r + 3));
-    while (r < end)
-    {
-        const uint8_t *r1;
-        while (!*(r++))
-            ; // skip current startcode
-
-        r1 = ff_avc_find_startcode(r, end); // find next startcode
-
-        // send a NALU (except NALU startcode), r1==end indicates this is the last NALU
-        rtpSendNAL(ctx, r, (int)(r1 - r), r1 == end);
-
-        // control transmission speed
-        usleep(1000000 / 25);
-        // suppose the frame rate is 25 fps
-        ctx->timestamp += (90000.0 / 25);
         r = r1;
     }
 }
