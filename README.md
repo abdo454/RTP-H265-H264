@@ -1,4 +1,3 @@
-## GitHub Repository Brief Rephrased:
 
 ### Overview:
 
